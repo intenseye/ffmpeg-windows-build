@@ -1755,7 +1755,7 @@ build_libxvid() {
 }
 
 build_libvpx() {
-  do_git_checkout https://chromium.googlesource.com/webm/libvpx.git
+  do_git_checkout https://chromium.googlesource.com/webm/libvpx.git libvpx_git "origin/main"
   cd libvpx_git
      apply_patch file://$patch_dir/vpx_160_semaphore.patch -p1 # perhaps someday can remove this after 1.6.0 or mingw fixes it LOL
     if [[ $compiler_flavors == "native" ]]; then
@@ -2373,6 +2373,7 @@ build_ffmpeg() {
     config_options="$init_options
     --disable-libcaca
     --disable-libmysofa
+    --disable-liblensfun
     --enable-gray
     --enable-libtesseract
     --enable-fontconfig
@@ -2402,7 +2403,6 @@ build_ffmpeg() {
     --enable-libzvbi
     --enable-libopenjpeg
     --enable-libopenh264
-    --enable-liblensfun
     --enable-libvmaf
     --enable-libsrt
     --enable-libxml2
@@ -2690,7 +2690,7 @@ build_ffmpeg_dependencies() {
   build_libsrt # requires gnutls, mingw-std-threads
   build_libaribb24
   build_libtesseract
-  build_lensfun  # requires png, zlib, iconv
+  # build_lensfun  # requires png, zlib, iconv
   # build_libtensorflow # broken
   build_libvpx
   build_libx265
