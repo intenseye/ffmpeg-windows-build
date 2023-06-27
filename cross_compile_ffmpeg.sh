@@ -2374,8 +2374,8 @@ build_ffmpeg() {
     --disable-libcaca
     --disable-libmysofa
     --disable-liblensfun
+    --disable-libtesseract
     --enable-gray
-    --enable-libtesseract
     --enable-fontconfig
     --enable-gmp
     --enable-gnutls
@@ -2416,7 +2416,7 @@ build_ffmpeg() {
 
     if [ "$bits_target" != "32" ]; then
       config_options+=" --enable-libsvthevc"
-      config_options+=" --enable-libsvtav1"
+      # config_options+=" --enable-libsvtav1"
       # config_options+=" --enable-libsvtvp9"
     fi
 
@@ -2428,9 +2428,9 @@ build_ffmpeg() {
     config_options+=" --enable-libvpx"
     #config_options+=" --enable-libsvtvp9" #not currently working but compiles if configured
 
-    if [[ $compiler_flavors != "native" ]]; then
-      config_options+=" --enable-nvenc --enable-nvdec" # don't work OS X
-    fi
+    # if [[ $compiler_flavors != "native" ]]; then
+    #   config_options+=" --enable-nvenc --enable-nvdec" # don't work OS X
+    # fi
 
     config_options+=" --extra-libs=-lharfbuzz" #  grr...needed for pre x264 build???
     config_options+=" --extra-libs=-lm" # libflite seemed to need this linux native...and have no .pc file huh?
@@ -2689,7 +2689,7 @@ build_ffmpeg_dependencies() {
   build_libxvid # FFmpeg now has native support, but libxvid still provides a better image.
   build_libsrt # requires gnutls, mingw-std-threads
   build_libaribb24
-  build_libtesseract
+  # build_libtesseract
   # build_lensfun  # requires png, zlib, iconv
   # build_libtensorflow # broken
   build_libvpx
@@ -2769,7 +2769,7 @@ build_dependencies=y
 git_get_latest=y
 prefer_stable=y # Only for x264 and x265.
 build_intel_qsv=y # note: not windows xp friendly!
-build_amd_amf=y
+build_amd_amf=n
 disable_nonfree=y # comment out to force user y/n selection
 original_cflags='-mtune=generic -O3' # high compatible by default, see #219, some other good options are listed below, or you could use -march=native to target your local box:
 original_cppflags='-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0' # Needed for mingw-w64 7 as FORTIFY_SOURCE is now partially implemented, but not actually working
