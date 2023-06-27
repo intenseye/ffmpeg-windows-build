@@ -415,7 +415,7 @@ do_git_checkout() {
   if [ ! -d $to_dir ]; then
     echo "Downloading (via git clone) $to_dir from $repo_url"
     rm -rf $to_dir.tmp # just in case it was interrupted previously...
-    git clone $repo_url $to_dir.tmp || exit 1
+    git clone $repo_url $to_dir.tmp --recurse-submodules || exit 1
     # prevent partial checkouts by renaming it only after success
     mv $to_dir.tmp $to_dir
     echo "done git cloning to $to_dir"
@@ -989,7 +989,7 @@ build_libpng() {
 }
 
 build_libwebp() {
-  do_git_checkout https://chromium.googlesource.com/webm/libwebp.git
+  do_git_checkout https://chromium.googlesource.com/webm/libwebp.git libwebp_git "origin/main"
   cd libwebp_git
     export LIBPNG_CONFIG="$mingw_w64_x86_64_prefix/bin/libpng-config --static" # LibPNG somehow doesn't get autodetected.
     generic_configure "--disable-wic"
@@ -1629,7 +1629,7 @@ build_vidstab() {
 }
 
 build_libmysofa() {
-  do_git_checkout https://github.com/hoene/libmysofa.git libmysofa_git
+  do_git_checkout https://github.com/hoene/libmysofa.git libmysofa_git "origin/main"
   cd libmysofa_git
     local cmake_params="-DBUILD_TESTS=0"
     if [[ $compiler_flavors == "native" ]]; then
@@ -1755,7 +1755,7 @@ build_libxvid() {
 }
 
 build_libvpx() {
-  do_git_checkout https://chromium.googlesource.com/webm/libvpx.git
+  do_git_checkout https://chromium.googlesource.com/webm/libvpx.git libvpx_git "origin/main"
   cd libvpx_git
      apply_patch file://$patch_dir/vpx_160_semaphore.patch -p1 # perhaps someday can remove this after 1.6.0 or mingw fixes it LOL
     if [[ $compiler_flavors == "native" ]]; then
@@ -2369,12 +2369,54 @@ build_ffmpeg() {
       init_options+=" --disable-schannel"
       # Fix WinXP incompatibility by disabling Microsoft's Secure Channel, because Windows XP doesn't support TLS 1.1 and 1.2, but with GnuTLS or OpenSSL it does.  XP compat!
     fi
-    config_options="$init_options --enable-libcaca --enable-gray --enable-libtesseract --enable-fontconfig --enable-gmp --enable-gnutls --enable-libass --enable-libbluray --enable-libbs2b --enable-libflite --enable-libfreetype --enable-libfribidi --disable-libgme --enable-libgsm --enable-libilbc --enable-libmodplug --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopus --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libvo-amrwbenc --enable-libvorbis --enable-libwebp --enable-libzimg --enable-libzvbi --enable-libmysofa --enable-libopenjpeg  --enable-libopenh264 --enable-liblensfun  --enable-libvmaf --enable-libsrt --enable-libxml2 --enable-opengl --enable-libdav1d --enable-cuda-llvm"
+
+    config_options="$init_options
+    --disable-libcaca
+    --disable-libmysofa
+    --disable-liblensfun
+    --disable-libtesseract
+    --enable-gray
+    --enable-fontconfig
+    --enable-gmp
+    --enable-gnutls
+    --enable-libass
+    --enable-libbluray
+    --enable-libbs2b
+    --enable-libflite
+    --enable-libfreetype
+    --enable-libfribidi
+    --disable-libgme
+    --enable-libgsm
+    --enable-libilbc
+    --enable-libmodplug
+    --enable-libopencore-amrnb
+    --enable-libopencore-amrwb
+    --enable-libopus
+    --enable-libsnappy
+    --enable-libsoxr
+    --enable-libspeex
+    --enable-libtheora
+    --enable-libvo-amrwbenc
+    --enable-libvorbis
+    --enable-libwebp
+    --enable-libzimg
+    --enable-libzvbi
+    --enable-libopenjpeg
+    --enable-libopenh264
+    --enable-libvmaf
+    --enable-libsrt
+    --enable-libxml2
+    --enable-opengl
+    --enable-libdav1d
+    --enable-cuda-llvm"
+
+    init_options="$(echo "$init_options" | tr '\n' ' ')"
+
     # config_options="$init_options --enable-libcaca --enable-gray --enable-libtesseract --enable-fontconfig --enable-gmp --enable-gnutls --enable-libass --enable-libbluray --enable-libbs2b --enable-libflite --enable-libfreetype --enable-libfribidi --enable-libgme --enable-libgsm --enable-libilbc --enable-libmodplug --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopus --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libvorbis --enable-libwebp --enable-libzimg --enable-libzvbi --enable-libmysofa --enable-libopenjpeg  --enable-libopenh264 --enable-liblensfun  --enable-libvmaf --enable-libsrt --enable-libxml2 --enable-opengl --enable-libdav1d --enable-cuda-llvm"
 
     if [ "$bits_target" != "32" ]; then
       config_options+=" --enable-libsvthevc"
-      config_options+=" --enable-libsvtav1"
+      # config_options+=" --enable-libsvtav1"
       # config_options+=" --enable-libsvtvp9"
     fi
 
@@ -2386,9 +2428,9 @@ build_ffmpeg() {
     config_options+=" --enable-libvpx"
     #config_options+=" --enable-libsvtvp9" #not currently working but compiles if configured
 
-    if [[ $compiler_flavors != "native" ]]; then
-      config_options+=" --enable-nvenc --enable-nvdec" # don't work OS X
-    fi
+    # if [[ $compiler_flavors != "native" ]]; then
+    #   config_options+=" --enable-nvenc --enable-nvdec" # don't work OS X
+    # fi
 
     config_options+=" --extra-libs=-lharfbuzz" #  grr...needed for pre x264 build???
     config_options+=" --extra-libs=-lm" # libflite seemed to need this linux native...and have no .pc file huh?
@@ -2568,7 +2610,7 @@ build_ffmpeg_dependencies() {
   build_meson_cross
   build_mingw_std_threads
   build_zlib # Zlib in FFmpeg is autodetected.
-  build_libcaca # Uses zlib and dlfcn (on windows).
+  # build_libcaca # Uses zlib and dlfcn (on windows).
   build_bzip2 # Bzlib (bzip2) in FFmpeg is autodetected.
   build_liblzma # Lzma in FFmpeg is autodetected. Uses dlfcn.
   build_iconv # Iconv in FFmpeg is autodetected. Uses dlfcn.
@@ -2628,12 +2670,12 @@ build_ffmpeg_dependencies() {
   build_frei0r # Needs dlfcn. could use opencv...
   if [ "$bits_target" != "32" ]; then
     build_svt-hevc
-    build_svt-av1
+    # build_svt-av1 # TODO: av1 wasn't there at the github URL, maybe moved?
     build_svt-vp9
   fi
   build_vidstab
   #build_facebooktransform360 # needs modified ffmpeg to use it so not typically useful
-  build_libmysofa # Needed for FFmpeg's SOFAlizer filter (https://ffmpeg.org/ffmpeg-filters.html#sofalizer). Uses dlfcn.
+  # build_libmysofa # Needed for FFmpeg's SOFAlizer filter (https://ffmpeg.org/ffmpeg-filters.html#sofalizer). Uses dlfcn.
   if [[ "$non_free" = "y" ]]; then
     build_fdk-aac # Uses dlfcn.
     if [[ $compiler_flavors != "native" ]]; then
@@ -2647,8 +2689,8 @@ build_ffmpeg_dependencies() {
   build_libxvid # FFmpeg now has native support, but libxvid still provides a better image.
   build_libsrt # requires gnutls, mingw-std-threads
   build_libaribb24
-  build_libtesseract
-  build_lensfun  # requires png, zlib, iconv
+  # build_libtesseract
+  # build_lensfun  # requires png, zlib, iconv
   # build_libtensorflow # broken
   build_libvpx
   build_libx265
@@ -2727,7 +2769,7 @@ build_dependencies=y
 git_get_latest=y
 prefer_stable=y # Only for x264 and x265.
 build_intel_qsv=y # note: not windows xp friendly!
-build_amd_amf=y
+build_amd_amf=n
 disable_nonfree=y # comment out to force user y/n selection
 original_cflags='-mtune=generic -O3' # high compatible by default, see #219, some other good options are listed below, or you could use -march=native to target your local box:
 original_cppflags='-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0' # Needed for mingw-w64 7 as FORTIFY_SOURCE is now partially implemented, but not actually working
